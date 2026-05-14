@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Arqueólogo de tu Historia</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap');
+:root{--paper:#f5efe0;--paper-dark:#e8dcc8;--ink:#2c1e0f;--ink-mid:#5c4033;--ink-light:#8b6e5a;--gold:#b8860b;--gold-light:#d4a843;--sepia:#a0784a;--rust:#8b3a1f;--forest:#2d5016;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#1a1209;font-family:'Inter',system-ui,sans-serif;color:var(--ink);min-height:100vh;overflow-x:hidden;}
+#app{max-width:720px;margin:0 auto;padding:16px;}
+.screen{display:none;}.screen.active{display:block;}
+.paper{background:var(--paper);border-radius:4px;position:relative;box-shadow:0 4px 24px rgba(0,0,0,.5),inset 0 0 60px rgba(160,120,74,.12);border:1px solid var(--paper-dark);}
+.paper::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(160,120,74,.07) 27px,rgba(160,120,74,.07) 28px);border-radius:4px;pointer-events:none;z-index:0;}
+.corner{position:absolute;width:22px;height:22px;border-color:var(--gold-light);border-style:solid;opacity:.5;z-index:1;}
+.corner.tl{top:8px;left:8px;border-width:2px 0 0 2px;}
+.corner.tr{top:8px;right:8px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:8px;left:8px;border-width:0 0 2px 2px;}
+.corner.br{bottom:8px;right:8px;border-width:0 2px 2px 0;}
+.badge{display:inline-block;border:1.5px solid var(--gold);color:var(--gold);font-size:9px;letter-spacing:3px;padding:3px 12px;text-transform:uppercase;margin-bottom:14px;}
+.big-title{font-family:'Playfair Display',Georgia,serif;font-size:30px;color:var(--ink);line-height:1.2;margin-bottom:6px;}
+.body-text{font-family:'Inter',sans-serif;color:var(--ink-mid);font-size:14px;line-height:1.7;}
+.deco{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--gold);font-size:9px;letter-spacing:2px;}
+.deco::before,.deco::after{content:'';flex:1;height:1px;background:var(--gold-light);opacity:.4;}
+.btn-main{display:block;width:100%;background:var(--ink);color:var(--paper);border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;font-size:13px;letter-spacing:2px;text-transform:uppercase;padding:15px;border-radius:2px;transition:background .2s;}
+.btn-main:hover{background:var(--ink-mid);}
+.instr-heading{font-family:'Playfair Display',serif;font-size:16px;color:var(--ink);font-weight:700;margin-bottom:4px;}
+.instr-body{font-family:'Inter',sans-serif;font-size:13px;color:var(--ink-mid);line-height:1.6;}
+.step-indicator{display:flex;justify-content:center;gap:6px;padding:14px 0 10px;}
+.s-dot{width:8px;height:8px;border-radius:50%;background:var(--paper-dark);transition:all .3s;}
+.s-dot.done{background:var(--gold);}.s-dot.active{background:var(--ink);transform:scale(1.3);}
+.brief-panel{padding:28px 28px 24px;text-align:center;}
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 20px 24px;}
+.mc{border:1.5px solid var(--paper-dark);padding:20px 16px;cursor:pointer;transition:all .2s;background:transparent;border-radius:3px;text-align:center;}
+.mc:hover{border-color:var(--gold);background:rgba(184,134,11,.05);transform:translateY(-2px);}
+.mc .mi{font-size:30px;margin-bottom:10px;display:block;}
+.mc .mn{font-family:'Playfair Display',serif;font-size:16px;color:var(--ink);margin-bottom:6px;font-weight:700;}
+.mc .md{font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-mid);line-height:1.4;}
+.mc .mz{font-family:'Inter',sans-serif;font-size:10px;color:var(--ink-light);letter-spacing:1px;text-transform:uppercase;margin-top:8px;}
+.lantern-wrap{padding:10px 22px;border-bottom:1px solid var(--paper-dark);}
+.lantern-top{display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:10px;letter-spacing:2px;color:var(--ink-light);text-transform:uppercase;margin-bottom:5px;}
+.lantern-track{height:9px;background:var(--paper-dark);border-radius:5px;overflow:hidden;border:1px solid var(--ink-light);}
+.lantern-fill{height:100%;background:linear-gradient(90deg,var(--gold-light),var(--gold));transition:width .4s ease;border-radius:5px;}
+.lantern-fill.low{background:linear-gradient(90deg,#c0392b,#e74c3c);}
+.tdots{display:flex;justify-content:center;gap:12px;padding:10px 0;}
+.tdot{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--paper-dark);display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:11px;color:var(--ink-light);transition:all .3s;}
+.tdot.done{background:var(--gold);border-color:var(--gold);color:var(--paper);}
+.tdot.active{border-color:var(--gold);color:var(--gold);font-weight:700;}
+
+/* ── DIG AREA ── */
+#dig-area{position:relative;width:100%;height:320px;overflow:hidden;background:#3d2b14;border-radius:0;}
+#ground-canvas{position:absolute;inset:0;width:100%;height:100%;}
+#interaction-layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;}
+
+/* INT 1 – Rock */
+#rock-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+#rock-btn{font-size:72px;cursor:pointer;user-select:none;filter:drop-shadow(0 6px 12px rgba(0,0,0,.5));transition:transform .08s ease,filter .08s ease;display:block;line-height:1;}
+#rock-btn:active{transform:scale(.82);filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));}
+
+/* INT 2 – Horizontal drag bar */
+#h-track{width:260px;height:60px;background:transparent;border:none;position:relative;}
+#h-knob{width:50px;height:50px;background:transparent;border-radius:0;position:absolute;top:0px;left:4px;cursor:grab;touch-action:none;box-shadow:none;font-size:45px;display:flex;align-items:center;justify-content:center;}
+#h-knob:active{cursor:grabbing;transform:scale(0.9);}
+
+/* INT 3 – Wheel */
+#wheel-wrap{position:relative;width:150px;height:150px;}
+#wheel-svg{width:150px;height:150px;cursor:grab;touch-action:none;user-select:none;}
+#wheel-svg:active{cursor:grabbing;}
+#wheel-spokes, #wheel-handle { transform-origin: 75px 75px; } /* Mantiene las lineas en su lugar */
+
+/* INT 4 – Vertical scrub */
+#vbar-wrap{display:flex;flex-direction:column;align-items:center;}
+#v-track{width:60px;height:180px;background:transparent;border:none;position:relative;}
+#v-knob{width:50px;height:50px;background:transparent;border-radius:0;position:absolute;left:4px;bottom:4px;cursor:grab;touch-action:none;box-shadow:none;font-size:45px;display:flex;align-items:center;justify-content:center;}
+#v-knob:active{cursor:grabbing;transform:scale(0.9);}
+
+/* INT 5 – Scratch canvas */
+#scratch-wrap{position:relative;}
+#scratch-canvas{border-radius:10px;cursor:crosshair;touch-action:none;box-shadow:0 4px 16px rgba(0,0,0,.5);}
+
+/* Trophy emerge overlay */
+#trophy-emerge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .6s ease;}
+#trophy-emoji-big{font-size:90px;filter:drop-shadow(0 0 20px rgba(212,168,67,.8));transform:translateY(30px);transition:transform .8s cubic-bezier(.175,.885,.32,1.275),opacity .6s ease;opacity:0;}
+#particles-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+/* Funny phrase pop (Ajustado para que aparezca ABAJO del trofeo) */
+#funny-pop{position:absolute;bottom:40px;top:auto;left:50%;transform:translate(-50%,20px) scale(0.8);background:var(--ink);color:var(--gold-light);font-family:'Playfair Display',serif;font-style:italic;font-size:16px;padding:12px 24px;border-radius:4px;border:2px solid var(--gold-light);opacity:0;transition:all .5s cubic-bezier(.175,.885,.32,1.275);pointer-events:none;white-space:nowrap;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.6);text-align:center;}
+#funny-pop.show{opacity:1;transform:translate(-50%,0) scale(1);}
+
+/* ── FORM ── */
+#form-panel{padding:16px 22px 20px;display:none;}
+.zone-chip{display:inline-block;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;border:1px solid var(--gold-light);padding:2px 10px;margin-bottom:14px;border-radius:1px;}
+.f-step{margin-bottom:13px;opacity:0;transform:translateY(6px);transition:opacity .35s,transform .35s;}
+.f-step.vis{opacity:1;transform:translateY(0);}
+.f-label{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:4px;}
+.f-prompt{font-family:'Inter',sans-serif;font-size:13px;color:var(--ink-mid);margin-bottom:6px;line-height:1.4;}
+.f-prompt b{color:var(--ink);}
+input[type=text]{width:100%;background:rgba(255,255,255,.45);border:none;border-bottom:1.5px solid var(--paper-dark);padding:7px 8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:border-color .2s;border-radius:0;}
+input[type=text]:focus{border-bottom-color:var(--gold);}
+.shape-grid{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 14px;}
+.s-opt{border:1.5px solid var(--paper-dark);padding:6px 10px;cursor:pointer;border-radius:2px;text-align:center;transition:all .2s;background:transparent;font-family:'Inter',sans-serif;font-size:10px;color:var(--ink-mid);}
+.s-opt:hover{border-color:var(--gold-light);}
+.s-opt.sel{border-color:var(--gold);background:rgba(184,134,11,.1);color:var(--ink);}
+.s-opt span{font-size:18px;display:block;margin-bottom:2px;}
+.btn-catalog{display:block;width:100%;background:var(--rust);color:#f5efe0;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:12px;border-radius:2px;margin-top:4px;transition:background .2s;}
+.btn-catalog:hover:not(:disabled){background:var(--forest);}
+.btn-catalog:disabled{opacity:.45;cursor:not-allowed;}
+
+/* ── VITRINA ── */
+.vit-header{text-align:center;padding:28px 24px 16px;border-bottom:2px solid var(--gold);margin-bottom:20px;}
+.vit-title{font-family:'Playfair Display',serif;font-size:24px;color:var(--ink);margin-bottom:4px;}
+.vit-sub{font-family:'Inter',sans-serif;font-size:13px;color:var(--ink-mid);}
+.trophies-showcase{display:flex;justify-content:center;flex-wrap:wrap;gap:20px;padding:8px 20px 24px;}
+.trophy-stand{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .25s cubic-bezier(.175,.885,.32,1.275);}
+.trophy-stand:hover{transform:translateY(-6px) scale(1.04);}
+.trophy-gem-big{font-size:54px;filter:drop-shadow(0 3px 8px rgba(184,134,11,.5));transition:transform .2s;display:block;}
+.trophy-plaque{background:var(--ink);color:var(--paper);padding:6px 12px;margin-top:8px;border-radius:1px;text-align:center;max-width:130px;}
+.trophy-plaque-name{font-family:'Playfair Display',serif;font-size:11px;font-weight:700;line-height:1.3;word-break:break-word;}
+.trophy-plaque-zone{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:1.5px;color:var(--gold-light);text-transform:uppercase;margin-top:2px;}
+#modal-overlay{position:fixed;inset:0;background:rgba(26,18,9,.75);z-index:100;display:none;align-items:center;justify-content:center;}
+#modal-overlay.open{display:flex;}
+#modal-box{background:var(--paper);border-radius:4px;max-width:420px;width:90%;padding:24px;position:relative;border:1px solid var(--gold-light);box-shadow:0 8px 32px rgba(0,0,0,.6);}
+.modal-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-mid);}
+.modal-gem{font-size:44px;display:block;text-align:center;margin-bottom:8px;}
+.modal-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--ink);text-align:center;margin-bottom:4px;font-weight:700;}
+.modal-zone{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;text-align:center;margin-bottom:14px;}
+.modal-row{margin-bottom:10px;border-bottom:1px solid var(--paper-dark);padding-bottom:10px;}
+.modal-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.modal-key{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:3px;}
+.modal-val{font-family:'Inter',sans-serif;font-size:13px;color:var(--ink-mid);line-height:1.5;}
+.vit-actions{padding:4px 20px 20px;display:flex;gap:10px;flex-wrap:wrap;}
+.btn-dl{flex:1;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font-family:'Inter',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:11px;cursor:pointer;border-radius:2px;transition:all .2s;}
+.btn-dl:hover{background:var(--ink);color:var(--paper);}
+.btn-dl.primary{background:var(--ink);color:var(--paper);}
+.btn-dl.primary:hover{background:var(--ink-mid);}
+.stamp{display:inline-block;border:2px solid var(--rust);color:var(--rust);font-family:'Inter',sans-serif;font-size:8px;letter-spacing:2px;padding:3px 8px;text-transform:uppercase;transform:rotate(-2deg);opacity:.65;margin-top:6px;}
+@media(max-width:480px){.method-grid{grid-template-columns:1fr;}.big-title{font-size:24px;}.trophies-showcase{gap:12px;}.trophy-gem-big{font-size:42px;}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="s-b1" class="screen active">
+<div class="paper">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="step-indicator"><div class="s-dot active"></div><div class="s-dot"></div><div class="s-dot"></div></div>
+  <div class="brief-panel">
+    <div class="badge">Expedición № 001</div>
+    <div class="big-title">El Arqueólogo<br>de tu Historia</div>
+    <div class="body-text" style="margin-top:8px;font-style:italic;">Una expedición al yacimiento más rico que conocerás</div>
+    <div class="deco">✦ Misión ✦</div>
+    <div style="text-align:left;">
+      <p class="instr-heading">Eres un arqueólogo.</p>
+      <p class="instr-body" style="margin-top:6px;">Hoy excavarás el yacimiento de tu propia historia para rescatar <strong style="color:var(--ink);">cinco grandes victorias</strong> que duermen enterradas bajo el polvo del tiempo.<br><br>Esos tesoros ya están ahí —solo hay que desenterrarlos y reconocer su valor.</p>
+    </div>
+    <button class="btn-main" style="margin-top:22px;" onclick="go('s-b2')">Continuar →</button>
+  </div>
+</div>
+</div>
+
+<div id="s-b2" class="screen">
+<div class="paper">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="step-indicator"><div class="s-dot done"></div><div class="s-dot active"></div><div class="s-dot"></div></div>
+  <div class="brief-panel">
+    <div class="badge">Reglas de campo</div>
+    <div class="big-title" style="font-size:22px;">Cómo funciona<br>la expedición</div>
+    <div class="deco">⚒ Instrucciones ⚒</div>
+    <div style="text-align:left;display:flex;flex-direction:column;gap:14px;">
+      <div><p class="instr-heading">🔦 La linterna</p><p class="instr-body">Tienes 15 minutos de luz.<br>Cuando se apague, la expedición concluye con lo que hayas reunido.</p></div>
+      <div><p class="instr-heading">⚒ La excavación</p><p class="instr-body">Cada tesoro está enterrado.<br>Necesitarás cavar con agilidad para hacerlo emerger.</p></div>
+      <div><p class="instr-heading">📋 El catálogo</p><p class="instr-body">Por cada hallazgo completarás una ficha breve: nombre, lo que ganaste, cómo lo lograste y qué diste a cambio.</p></div>
+      <div><p class="instr-heading">🏛️ La vitrina</p><p class="instr-body">Al final, tus trofeos quedan exhibidos.<br>Toca cada uno para ver su ficha y descarga tu constancia en PDF.</p></div>
+    </div>
+    <button class="btn-main" style="margin-top:22px;" onclick="go('s-b3')">Continuar →</button>
+  </div>
+</div>
+</div>
+
+<div id="s-b3" class="screen">
+<div class="paper">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="step-indicator"><div class="s-dot done"></div><div class="s-dot done"></div><div class="s-dot active"></div></div>
+  <div style="text-align:center;padding:24px 20px 16px;">
+    <div class="badge">Selección de sitio</div>
+    <div class="big-title" style="font-size:20px;">¿Por dónde empezamos<br>a excavar?</div>
+  </div>
+  <div class="method-grid">
+    <div class="mc" onclick="selectMethod('tiempo')"><span class="mi">🗺️</span><div class="mn">Línea del tiempo</div><div class="md">Excavamos cronológicamente</div><div class="mz">Infancia · Juventud · Adultez · Hoy</div></div>
+    <div class="mc" onclick="selectMethod('temas')"><span class="mi">🧭</span><div class="mn">Zonas temáticas</div><div class="md">Excavamos por territorios de tu vida.</div><div class="mz">Trabajo · Relaciones · Salud · Retos</div></div>
+  </div>
+</div>
+</div>
+
+<div id="s-dig" class="screen">
+<div class="paper">
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="lantern-wrap">
+    <div class="lantern-top"><span>🔦 carga de linterna</span><span id="timer-txt">15:00</span></div>
+    <div class="lantern-track"><div class="lantern-fill" id="lf" style="width:100%"></div></div>
+  </div>
+  <div class="tdots" id="tdots"></div>
+  <div style="text-align:center;font-family:'Inter',sans-serif;font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;padding:4px 0;" id="site-lbl">— —</div>
+
+  <div id="dig-area">
+    <canvas id="ground-canvas"></canvas>
+    <canvas id="particles-canvas"></canvas>
+    <div id="trophy-emerge"><span id="trophy-emoji-big">🏆</span></div>
+    <div id="funny-pop"></div>
+    
+    <div id="int-popup" style="position:absolute;inset:0;background:rgba(26,18,9,0.9);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;display:none;">
+      <div id="int-popup-txt" style="background:#ffffff; color:#1a1209; font-family:'Inter',sans-serif; font-size:15px; font-weight:600; text-align:center; margin-bottom:20px; line-height:1.5; padding:18px 24px; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.5); max-width:85%;"></div>
+      <button class="btn-main" style="width:auto;padding:12px 28px;background:var(--gold);color:#fff;" onclick="beginDig()">Comenzar</button>
+    </div>
+
+    <div id="interaction-layer" style="display:none;">
+      <div id="int-1" class="int-module" style="display:none;">
+        <div id="rock-wrap"><span id="rock-btn" onclick="Int1.hit()">🪏</span></div>
+      </div>
+      <div id="int-2" class="int-module" style="display:none;">
+        <div id="h-track"><div id="h-knob">🪏</div></div>
+      </div>
+      <div id="int-3" class="int-module" style="display:none;">
+        <div id="wheel-wrap">
+          <svg id="wheel-svg" viewBox="0 0 150 150">
+            <circle cx="75" cy="75" r="60" fill="#2c1e0f" stroke="#d4a843" stroke-width="3"/>
+            <circle cx="75" cy="75" r="42" fill="none" stroke="#5c4033" stroke-width="2" stroke-dasharray="8 6"/>
+            <circle cx="75" cy="75" r="10" fill="#d4a843"/>
+            <g id="wheel-spokes">
+              <line x1="75" y1="20" x2="75" y2="65" stroke="#d4a843" stroke-width="4" stroke-linecap="round"/>
+              <line x1="75" y1="85" x2="75" y2="130" stroke="#d4a843" stroke-width="4" stroke-linecap="round"/>
+              <line x1="20" y1="75" x2="65" y2="75" stroke="#d4a843" stroke-width="4" stroke-linecap="round"/>
+              <line x1="85" y1="75" x2="130" y2="75" stroke="#d4a843" stroke-width="4" stroke-linecap="round"/>
+              <line x1="33" y1="33" x2="64" y2="64" stroke="#d4a843" stroke-width="3" stroke-linecap="round"/>
+              <line x1="86" y1="86" x2="117" y2="117" stroke="#d4a843" stroke-width="3" stroke-linecap="round"/>
+              <line x1="117" y1="33" x2="86" y2="64" stroke="#d4a843" stroke-width="3" stroke-linecap="round"/>
+              <line x1="33" y1="117" x2="64" y2="86" stroke="#d4a843" stroke-width="3" stroke-linecap="round"/>
+            </g>
+            <circle id="wheel-handle" cx="75" cy="22" r="9" fill="#d4a843" stroke="#2c1e0f" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+      <div id="int-4" class="int-module" style="display:none;">
+        <div id="vbar-wrap">
+          <div id="v-track"><div id="v-knob">⛏️</div></div>
+        </div>
+      </div>
+      <div id="int-5" class="int-module" style="display:none;">
+        <div id="scratch-wrap"><canvas id="scratch-canvas" width="280" height="140"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="form-panel" style="padding:16px 22px 20px;display:none;">
+    <div id="zone-chip" class="zone-chip"></div>
+    <div class="f-step vis" id="fs-nombre">
+      <div class="f-label">① Nombre del hallazgo</div>
+      <div class="f-prompt">Dale un título corto a esta victoria.</div>
+      <input type="text" id="i-nombre" placeholder="El día que..." maxlength="60" oninput="chk()">
+    </div>
+    <div class="f-step" id="fs-premio">
+      <div class="f-label">② El premio</div>
+      <div class="f-prompt">Lo que gané con esta victoria fue</div>
+      <input type="text" id="i-premio" placeholder="..." maxlength="80" oninput="chk()">
+    </div>
+    <div class="f-step" id="fs-como">
+      <div class="f-label">③ Cómo lo logré</div>
+      <div class="f-prompt">La forma en que lo logré fue</div>
+      <input type="text" id="i-como" placeholder="..." maxlength="100" oninput="chk()">
+    </div>
+    <div class="f-step" id="fs-dio">
+      <div class="f-label">④ Lo que di a cambio</div>
+      <div class="f-prompt">Para conseguirlo, di</div>
+      <input type="text" id="i-dio" placeholder="..." maxlength="100" oninput="chk()">
+    </div>
+    <div class="f-step" id="fs-entr">
+      <div class="f-label">⑤ Cómo lo entregué</div>
+      <div class="f-prompt">Y la manera en que lo entregué fue</div>
+      <input type="text" id="i-entr" placeholder="..." maxlength="100" oninput="chk()">
+    </div>
+    <div class="f-step vis" id="fs-forma">
+      <div class="deco">elige la forma de tu tesoro</div>
+      <div class="shape-grid" id="sg"></div>
+    </div>
+    <button class="btn-catalog" id="btn-cat" disabled onclick="saveTreasure()">⚒ &nbsp;Catalogar este tesoro</button>
+  </div>
+</div>
+</div>
+
+<div id="s-vit" class="screen">
+<div class="paper" id="vit-paper">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="vit-header">
+    <div class="badge">Registro de Hallazgos</div>
+    <div class="vit-title">Vitrina de Trofeos</div>
+    <div class="vit-sub">Toca un trofeo para ver su ficha</div>
+    <div class="stamp" id="vit-stamp">Autenticado</div>
+  </div>
+  <div class="trophies-showcase" id="trophies-showcase"></div>
+  <div class="vit-actions" id="vit-actions-box">
+    <button class="btn-dl primary" id="btn-dl" onclick="dlVitrinaPDF()">↓ Descargar PDF</button>
+    <button class="btn-dl" onclick="resetGame()">↺ Nueva expedición</button>
+  </div>
+</div>
+</div>
+
+</div>
+
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <span class="modal-gem" id="m-gem"></span>
+    <div class="modal-title" id="m-title"></div>
+    <div class="modal-zone" id="m-zone"></div>
+    <div class="modal-row"><div class="modal-key">Lo que gané</div><div class="modal-val" id="m-premio"></div></div>
+    <div class="modal-row"><div class="modal-key">Cómo lo logré</div><div class="modal-val" id="m-como"></div></div>
+    <div class="modal-row"><div class="modal-key">Lo que di a cambio</div><div class="modal-val" id="m-dio"></div></div>
+    <div class="modal-row"><div class="modal-key">Cómo lo entregué</div><div class="modal-val" id="m-entr"></div></div>
+  </div>
+</div>
+
+<script>
+// ── AUDIO ──────────────────────────────────────────────────
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+function rAC(){if(AC.state==='suspended')AC.resume();}
+function tone(f,t,d,v,dl=0){
+  rAC();const o=AC.createOscillator(),g=AC.createGain();
+  o.connect(g);g.connect(AC.destination);
+  o.type=t;o.frequency.setValueAtTime(f,AC.currentTime+dl);
+  g.gain.setValueAtTime(v,AC.currentTime+dl);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dl+d);
+  o.start(AC.currentTime+dl);o.stop(AC.currentTime+dl+d+.02);
+}
+const sndDig = () => tone(200+(Math.random()*100),'sawtooth',.04,.06);
+const sndReveal=()=>{[440,554,659,880,1100].forEach((f,i)=>tone(f,'sine',.4,.18,i*.09));};
+const sndCatalog=()=>{[523,659,784,1047].forEach((f,i)=>tone(f,'sine',.15,.14,i*.1));};
+const sndCoin=()=>{tone(1200,'sine',.07,.15);tone(900,'sine',.1,.1,.08);};
+const sndNav=()=>tone(400,'sine',.08,.07);
+const sndTimer=()=>tone(220,'square',.18,.18);
+const sndScratch=()=>tone(200+(Math.random()*100),'sawtooth',.04,.06);
+
+// ── DATA ──────────────────────────────────────────────────
+const SHAPES=[
+  {e:'🏺',n:'Vasija'},{e:'🪙',n:'Moneda'},{e:'💎',n:'Joya'},
+  {e:'📜',n:'Pergamino'},{e:'🗿',n:'Estatuilla'},{e:'⚒️',n:'Herramienta'},
+  {e:'🔮',n:'Cristal'},{e:'🪬',n:'Amuleto'}
+];
+const ZONES_T=['Yacimiento de la Infancia','Estrato de la Juventud','Capa de la Adultez Temprana','Zona del Presente','Sitio Libre'];
+const ZONES_TM=['Yacimiento del Trabajo','Estrato de las Relaciones','Zona de la Salud','Capa de los Retos','Sitio del Aprendizaje'];
+
+// Exactamente 5 mensajes ordenados
+const FUNNY = [
+  '¡Un hallazgo legendario!',
+  '¡Tu esfuerzo ha salido a la luz!',
+  '¡Una joya de tu propia historia!',
+  '¡El brillo de tu victoria es eterno!',
+  '¡Tesoro rescatado con éxito!'
+];
+
+let ST={method:null,zones:[],treasures:[],cur:0,selShape:null,timerSec:900,timerInt:null,digDone:false};
+
+// ── GROUND CANVAS (parallax soil layers) ──────────────────
+let gCanvas,gCtx,pCanvas,pCtx,particles=[],groundAnim,digProgress=0,digAnimating=false;
+
+function initGroundCanvas(){
+  gCanvas=document.getElementById('ground-canvas');
+  pCanvas=document.getElementById('particles-canvas');
+  const area=document.getElementById('dig-area');
+  gCanvas.width=area.clientWidth||680;
+  gCanvas.height=area.clientHeight||320;
+  pCanvas.width=gCanvas.width;pCanvas.height=gCanvas.height;
+  gCtx=gCanvas.getContext('2d');
+  pCtx=pCanvas.getContext('2d');
+  particles=[];digProgress=0;digAnimating=false;
+  drawGround(0);
+  // hide trophy
+  const te=document.getElementById('trophy-emerge');
+  te.style.opacity='0';
+  document.getElementById('trophy-emoji-big').style.opacity='0';
+  document.getElementById('trophy-emoji-big').style.transform='translateY(30px)';
+}
+
+function drawGround(p){
+  const W=gCanvas.width,H=gCanvas.height;
+  gCtx.clearRect(0,0,W,H);
+  gCtx.fillStyle='#5a3e22';gCtx.fillRect(0,0,W,H*.3);
+  const layers=[
+    {c:'#6b4422',h:.18},{c:'#7a5030',h:.20},
+    {c:'#8c5e38',h:.18},{c:'#9e6c42',h:.20},{c:'#b07a50',h:.24}
+  ];
+  let y=H*.3;
+  layers.forEach((l,i)=>{
+    const revealFrac=Math.max(0,Math.min(1,(p*layers.length)-i));
+    const layerH=H*l.h;
+    gCtx.fillStyle=l.c;
+    gCtx.fillRect(0,y,W,layerH);
+    if(revealFrac>0){
+      const holeW=Math.min(W*.6,W*.2+revealFrac*W*.4);
+      gCtx.fillStyle='rgba(20,10,4,'+(0.7+revealFrac*.3)+')';
+      gCtx.beginPath();
+      gCtx.ellipse(W/2,y+layerH*.5,holeW/2,layerH*.6*revealFrac,0,0,Math.PI*2);
+      gCtx.fill();
+    }
+    y+=layerH;
+  });
+  gCtx.fillStyle='rgba(0,0,0,0.06)';
+  for(let i=0;i<80;i++){
+    gCtx.fillRect(Math.random()*W,Math.random()*H,1+Math.random()*2,1);
+  }
+}
+
+function spawnParticles(cx,cy,count=18){
+  for(let i=0;i<count;i++){
+    const ang=-Math.PI*(0.15+Math.random()*.7);
+    const spd=2+Math.random()*5;
+    const cols=['#7a5030','#9e6c42','#b07a50','#c89060','#6b4422'];
+    particles.push({x:cx,y:cy,vx:Math.cos(ang)*spd*(Math.random()<.5?-1:1),vy:Math.sin(ang)*spd,r:2+Math.random()*4,alpha:.95,color:cols[Math.floor(Math.random()*cols.length)]});
+  }
+}
+
+function animParticles(){
+  pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.18;p.alpha-=.018;p.r*=.97;
+    pCtx.globalAlpha=Math.max(0,p.alpha);pCtx.fillStyle=p.color;
+    pCtx.beginPath();pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);pCtx.fill();
+  });
+  pCtx.globalAlpha=1;
+  particles=particles.filter(p=>p.alpha>0.01);
+}
+
+function runGroundLoop(){
+  animParticles();
+  if(particles.length>0||digAnimating)groundAnim=requestAnimationFrame(runGroundLoop);
+}
+
+function setDigProgress(pct){
+  if(ST.digDone) return;
+  digProgress = Math.max(0, Math.min(1, pct));
+  drawGround(digProgress);
+  if(digProgress >= 1) triggerReveal();
+}
+
+function triggerReveal(){
+  if(ST.digDone)return;
+  ST.digDone=true;
+  document.getElementById('interaction-layer').style.display='none';
+  sndReveal();
+  digAnimating=false;
+  
+  // Ráfaga final de partículas
+  const W=gCanvas.width,H=gCanvas.height;
+  for(let i=0;i<5;i++)setTimeout(()=>spawnParticles(W/2,H*.4,20),i*80);
+  setTimeout(()=>{if(!digAnimating){digAnimating=true;runGroundLoop();}},0);
+  
+  // Mostrar trofeo
+  const te=document.getElementById('trophy-emerge');
+  const teb=document.getElementById('trophy-emoji-big');
+  te.style.opacity='1';
+  teb.style.opacity='1';
+  teb.style.transform='translateY(0)';
+  
+  // Mostrar frase divertida ordenada (usando ST.cur)
+  showFunny(FUNNY[ST.cur]);
+  
+  setTimeout(()=>{
+    showForm();
+  },1800);
+}
+
+function showFunny(txt){
+  const el=document.getElementById('funny-pop');
+  el.textContent=txt;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ── INTERACTIONS OBJECTS ──────────────────────────────────
+// Ajustados para durar entre 10 y 15 segundos en promedio.
+const Int1 = {
+  hits: 0,
+  reset() { this.hits = 0; },
+  hit() {
+    if(ST.digDone) return;
+    sndDig();
+    this.hits++;
+    const pct = this.hits / 45; // ~45 clics toma unos 11-13s
+    spawnParticles(gCanvas.width/2+(Math.random()-.5)*80, gCanvas.height*.6, 12);
+    if(!digAnimating){digAnimating=true; runGroundLoop();}
+    setDigProgress(pct);
+  }
+};
+
+const Int2 = {
+  dragging: false, lastX: 0, totalDist: 0, TARGET: 8000, // ~10-14s de arrastre continuo
+  reset() {
+    this.totalDist = 0; this.dragging = false;
+    document.getElementById('h-knob').style.left = '4px';
+  },
+  init() {
+    const kb = document.getElementById('h-knob');
+    kb.addEventListener('pointerdown', e => {
+      this.dragging = true;
+      this.lastX = e.clientX || e.touches?.[0]?.clientX || 0;
+      kb.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    kb.addEventListener('pointermove', e => {
+      if(!this.dragging || ST.digDone) return;
+      const cx = e.clientX || e.touches?.[0]?.clientX || 0;
+      const delta = cx - this.lastX;
+      const absDelta = Math.abs(delta);
+      
+      const tr = document.getElementById('h-track');
+      const maxX = tr.clientWidth - kb.offsetWidth - 4;
+      let curL = parseFloat(kb.style.left) || 4;
+      let nx = Math.max(4, Math.min(maxX, curL + delta));
+      kb.style.left = nx + 'px';
+      this.lastX = cx;
+
+      if(absDelta > 0) {
+        this.totalDist += absDelta;
+        if(this.totalDist % 30 < absDelta) sndDig(); // throttle sound
+        const pct = this.totalDist / this.TARGET;
+        spawnParticles(gCanvas.width/2+(Math.random()-.5)*40, gCanvas.height*.6, 2);
+        if(!digAnimating){digAnimating=true; runGroundLoop();}
+        setDigProgress(pct);
+      }
+    });
+    kb.addEventListener('pointerup', () => this.dragging = false);
+    kb.addEventListener('pointercancel', () => this.dragging = false);
+  }
+};
+
+const Int3 = {
+  dragging: false, lastAngle: 0, totalRot: 0, TARGET: Math.PI * 40, // 20 vueltas completas (~12-15s)
+  reset() {
+    this.totalRot = 0; this.dragging = false;
+    document.getElementById('wheel-spokes').style.transform = `rotate(0rad)`;
+    document.getElementById('wheel-handle').style.transform = `rotate(0rad)`;
+  },
+  getAngle(e, rect) {
+    const cx = e.clientX || (e.touches?.[0]?.clientX || 0);
+    const cy = e.clientY || (e.touches?.[0]?.clientY || 0);
+    return Math.atan2(cy - (rect.top + rect.height / 2), cx - (rect.left + rect.width / 2));
+  },
+  init() {
+    const ws = document.getElementById('wheel-svg');
+    ws.addEventListener('pointerdown', e => {
+      this.dragging = true;
+      const r = ws.getBoundingClientRect();
+      this.lastAngle = this.getAngle(e, r);
+      ws.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    ws.addEventListener('pointermove', e => {
+      if(!this.dragging || ST.digDone) return;
+      const r = ws.getBoundingClientRect();
+      const a = this.getAngle(e, r);
+      let diff = a - this.lastAngle;
+      if(diff > Math.PI) diff -= Math.PI * 2;
+      if(diff < -Math.PI) diff += Math.PI * 2;
+      this.totalRot += Math.abs(diff);
+      this.lastAngle = a;
+
+      document.getElementById('wheel-spokes').style.transform = `rotate(${this.totalRot}rad)`;
+      document.getElementById('wheel-handle').style.transform = `rotate(${this.totalRot}rad)`;
+
+      if(Math.abs(diff) > 0.02) {
+        if(this.totalRot % 0.5 < Math.abs(diff)) sndDig();
+        const pct = this.totalRot / this.TARGET;
+        spawnParticles(gCanvas.width/2+(Math.random()-.5)*40, gCanvas.height*.6, 2);
+        if(!digAnimating){digAnimating=true; runGroundLoop();}
+        setDigProgress(pct);
+      }
+    });
+    ws.addEventListener('pointerup', () => this.dragging = false);
+    ws.addEventListener('pointercancel', () => this.dragging = false);
+  }
+};
+
+const Int4 = {
+  dragging: false, lastY: 0, totalDist: 0, TARGET: 8000, // ~10-15s esfuerzo
+  reset() {
+    this.totalDist = 0; this.dragging = false;
+    document.getElementById('v-knob').style.bottom = '4px';
+  },
+  init() {
+    const kb = document.getElementById('v-knob');
+    kb.addEventListener('pointerdown', e => {
+      this.dragging = true;
+      this.lastY = e.clientY || e.touches?.[0]?.clientY || 0;
+      kb.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    kb.addEventListener('pointermove', e => {
+      if(!this.dragging || ST.digDone) return;
+      const cy = e.clientY || e.touches?.[0]?.clientY || 0;
+      const delta = cy - this.lastY;
+      const absDelta = Math.abs(delta);
+      
+      const tr = document.getElementById('v-track');
+      const maxY = tr.clientHeight - kb.offsetHeight - 4;
+      let curB = parseFloat(kb.style.bottom) || 4;
+      let ny = Math.max(4, Math.min(maxY, curB - delta));
+      kb.style.bottom = ny + 'px';
+      this.lastY = cy;
+
+      if(absDelta > 0) {
+        this.totalDist += absDelta;
+        if(this.totalDist % 40 < absDelta) sndDig();
+        const pct = this.totalDist / this.TARGET;
+        spawnParticles(gCanvas.width/2+(Math.random()-.5)*40, gCanvas.height*.6, 2);
+        if(!digAnimating){digAnimating=true; runGroundLoop();}
+        setDigProgress(pct);
+      }
+    });
+    kb.addEventListener('pointerup', () => this.dragging = false);
+    kb.addEventListener('pointercancel', () => this.dragging = false);
+  }
+};
+
+const Int5 = {
+  scraping: false, scratchPx: 0, TARGET: 3000, // ~10-12s de raspado rápido
+  reset() {
+    this.scratchPx = 0; this.scraping = false;
+    const canvas = document.getElementById('scratch-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 280; canvas.height = 140;
+    ctx.fillStyle = '#5c3d1e'; ctx.fillRect(0, 0, 280, 140);
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.font = '80px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🏆', 140, 75);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(74,52,20,.92)'; ctx.fillRect(0, 0, 280, 140);
+  },
+  init() {
+    const canvas = document.getElementById('scratch-canvas');
+    canvas.addEventListener('pointerdown', e => { this.scraping = true; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener('pointermove', e => {
+      if(!this.scraping || ST.digDone) return;
+      const r = canvas.getBoundingClientRect();
+      const sx = (e.clientX - r.left) * (280 / r.width);
+      const sy = (e.clientY - r.top) * (140 / r.height);
+      const ctx = canvas.getContext('2d');
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath(); ctx.arc(sx, sy, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+
+      this.scratchPx += 4;
+      if(this.scratchPx % 12 === 0) sndScratch();
+
+      const pct = this.scratchPx / this.TARGET;
+      spawnParticles(gCanvas.width/2+(Math.random()-.5)*40, gCanvas.height*.6, 2);
+      if(!digAnimating){digAnimating=true; runGroundLoop();}
+      setDigProgress(pct);
+    });
+    canvas.addEventListener('pointerup', () => this.scraping = false);
+    canvas.addEventListener('pointercancel', () => this.scraping = false);
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  Int2.init(); Int3.init(); Int4.init(); Int5.init();
+});
+
+function startInteraction(idx) {
+  document.querySelectorAll('.int-module').forEach(m => m.style.display = 'none');
+  const n = (idx % 5) + 1;
+  document.getElementById(`int-${n}`).style.display = 'flex';
+
+  if (n === 1) Int1.reset();
+  if (n === 2) Int2.reset();
+  if (n === 3) Int3.reset();
+  if (n === 4) Int4.reset();
+  if (n === 5) Int5.reset();
+
+  // --- LÓGICA DE TEXTO DINÁMICO ---
+  // Obtenemos el nombre de la zona (ej: "Yacimiento de la Infancia")
+  const zonaCompleta = ST.zones[idx] || "tu historia";
+  
+  // Limpiamos el nombre para que suene natural (quitamos "Yacimiento de", "Estrato de", etc.)
+  const zonaLimpia = zonaCompleta
+    .replace('Yacimiento de la ', 'tu ')
+    .replace('Yacimiento del ', 'tu ')
+    .replace('Estrato de la ', 'tu ')
+    .replace('Estrato de las ', 'tus ')
+    .replace('Capa de la ', 'tu ')
+    .replace('Zona del ', 'tu ')
+    .replace('Zona de la ', 'tu ')
+    .replace('Sitio del ', 'tu ')
+    .replace('Sitio Libre', 'tu historia')
+    .toLowerCase();
+
+  const acciones = [
+    "da clic en la pala varias veces para cavar la tierra.",
+    "arrastra la pala de izquierda a derecha continuamente.",
+    "gira la rueda del mecanismo arqueológico en círculos.",
+    "mueve el pico de arriba hacia abajo para picar la roca.",
+    "raspa la arena deslizando el dedo o ratón rápidamente."
+  ];
+
+  // Construimos la frase final
+  const instruccionFinal = `Piensa en una victoria de ${zonaLimpia}. Ahora ${acciones[n-1]}`;
+
+  document.getElementById('interaction-layer').style.display = 'none';
+  document.getElementById('int-popup-txt').textContent = instruccionFinal;
+  document.getElementById('int-popup').style.display = 'flex';
+}
+
+function beginDig(){
+  document.getElementById('int-popup').style.display='none';
+  document.getElementById('interaction-layer').style.display='flex';
+}
+
+// ── FORM ──────────────────────────────────────────────────
+function showForm(){
+  document.getElementById('form-panel').style.display='block';
+  ['fs-premio','fs-como','fs-dio','fs-entr'].forEach((id,i)=>{
+    setTimeout(()=>document.getElementById(id).classList.add('vis'),i*160+100);
+  });
+  document.getElementById('zone-chip').textContent=ST.zones[ST.cur]||`Sitio ${ST.cur+1}`;
+  renderShapeGrid();
+  ['i-nombre','i-premio','i-como','i-dio','i-entr'].forEach(id=>document.getElementById(id).value='');
+  ST.selShape=null;document.getElementById('btn-cat').disabled=true;
+}
+
+function renderShapeGrid(){
+  const g=document.getElementById('sg');g.innerHTML='';
+  SHAPES.forEach((s,i)=>{
+    // Verificar si ya fue seleccionado
+    const yaUsado = ST.treasures.some(t => t.shape.e === s.e);
+    if(yaUsado) return; // Si ya se usó, no lo mostramos
+
+    const el=document.createElement('div');el.className='s-opt';
+    el.innerHTML=`<span style="font-size:28px; display:block;">${s.e}</span>`;
+    el.onclick=()=>{sndCoin();document.querySelectorAll('.s-opt').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');ST.selShape=i;chk();};
+    g.appendChild(el);
+  });
+}
+
+function chk(){
+  const ok=['i-nombre','i-premio','i-como','i-dio','i-entr'].every(id=>document.getElementById(id).value.trim())&&ST.selShape!==null;
+  document.getElementById('btn-cat').disabled=!ok;
+}
+
+function saveTreasure(){
+  sndCatalog();
+  const zone=ST.zones[ST.cur]||`Sitio ${ST.cur+1}`;
+  ST.treasures.push({
+    nombre:document.getElementById('i-nombre').value.trim(),
+    premio:document.getElementById('i-premio').value.trim(),
+    como:document.getElementById('i-como').value.trim(),
+    dio:document.getElementById('i-dio').value.trim(),
+    entr:document.getElementById('i-entr').value.trim(),
+    shape:SHAPES[ST.selShape],zone
+  });
+  const dot=document.getElementById('dot-'+ST.cur);
+  if(dot){dot.className='tdot done';dot.textContent='✓';}
+  if(ST.treasures.length>=5){finishExp();return;}
+  ST.cur++;loadSlot(ST.cur);
+}
+
+function loadSlot(idx){
+  ST.selShape=null;ST.digDone=false;digProgress=0;
+  document.getElementById('form-panel').style.display='none';
+  ['fs-premio','fs-como','fs-dio','fs-entr'].forEach(id=>document.getElementById(id).classList.remove('vis'));
+  document.getElementById('site-lbl').textContent=(ST.zones[idx]||`Sitio ${idx+1}`).toUpperCase();
+  updateDots(idx);
+  cancelAnimationFrame(groundAnim);particles=[];
+  
+  // reset trophy and funny texts
+  const te=document.getElementById('trophy-emerge');
+  te.style.opacity='0';
+  document.getElementById('trophy-emoji-big').style.opacity='0';
+  document.getElementById('trophy-emoji-big').style.transform='translateY(30px)';
+  document.getElementById('funny-pop').classList.remove('show');
+  
+  initGroundCanvas();
+  startInteraction(idx);
+}
+
+function updateDots(cur){
+  for(let i=0;i<5;i++){
+    const d=document.getElementById('dot-'+i);if(!d)continue;
+    d.className='tdot';
+    if(i<cur)d.classList.add('done');
+    else if(i===cur)d.classList.add('active');
+  }
+}
+
+// ── TIMER ─────────────────────────────────────────────────
+function startTimer(){
+  ST.timerInt=setInterval(()=>{
+    ST.timerSec--;
+    const m=Math.floor(ST.timerSec/60),s=ST.timerSec%60;
+    document.getElementById('timer-txt').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    const pct=(ST.timerSec/900)*100;
+    const lf=document.getElementById('lf');lf.style.width=pct+'%';
+    if(pct<25)lf.classList.add('low');else lf.classList.remove('low');
+    if(ST.timerSec===60||ST.timerSec===30)sndTimer();
+    if(ST.timerSec<=0){clearInterval(ST.timerInt);finishExp();}
+  },1000);
+}
+
+function finishExp(){clearInterval(ST.timerInt);cancelAnimationFrame(groundAnim);renderVitrina();go('s-vit');}
+
+// ── VITRINA ───────────────────────────────────────────────
+function renderVitrina(){
+  const sc=document.getElementById('trophies-showcase');sc.innerHTML='';
+  const today=new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('vit-stamp').textContent=today;
+  ST.treasures.forEach((t,i)=>{
+    const el=document.createElement('div');el.className='trophy-stand';
+    el.innerHTML=`<span class="trophy-gem-big">${t.shape.e}</span>
+      <div class="trophy-plaque">
+        <div class="trophy-plaque-name">${esc(t.nombre)}</div>
+        <div class="trophy-plaque-zone">${esc(t.zone.split(' ').slice(0,3).join(' '))}</div>
+      </div>
+      <div class="trophy-details" style="display:none; flex:1; width:100%; text-align:left;">
+        <div style="background:rgba(255,255,255,0.6); border:1px solid var(--gold-light); padding:16px; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+          <div style="font-family:'Playfair Display',serif; font-size:18px; font-weight:bold; color:var(--ink); border-bottom:1px solid var(--paper-dark); padding-bottom:8px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:flex-end;">
+            <span>${esc(t.nombre)}</span>
+            <span style="font-family:'Inter',sans-serif; font-size:10px; color:var(--gold); text-transform:uppercase; letter-spacing:1px; font-weight:normal; text-align:right;">${esc(t.zone)}</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div><div style="color:var(--gold);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Gané</div><div style="font-size:12px;color:var(--ink-mid);line-height:1.4;">${esc(t.premio)}</div></div>
+            <div><div style="color:var(--gold);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Logré</div><div style="font-size:12px;color:var(--ink-mid);line-height:1.4;">${esc(t.como)}</div></div>
+            <div><div style="color:var(--gold);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Di a cambio</div><div style="font-size:12px;color:var(--ink-mid);line-height:1.4;">${esc(t.dio)}</div></div>
+            <div><div style="color:var(--gold);font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Entregué</div><div style="font-size:12px;color:var(--ink-mid);line-height:1.4;">${esc(t.entr)}</div></div>
+          </div>
+        </div>
+      </div>`;
+    el.onclick=()=>{sndCoin();openModal(i);};
+    sc.appendChild(el);
+  });
+}
+
+function openModal(i){
+  const t=ST.treasures[i];
+  document.getElementById('m-gem').textContent=t.shape.e;
+  document.getElementById('m-title').textContent=t.nombre;
+  document.getElementById('m-zone').textContent=t.zone.toUpperCase();
+  document.getElementById('m-premio').textContent=t.premio;
+  document.getElementById('m-como').textContent=t.como;
+  document.getElementById('m-dio').textContent=t.dio;
+  document.getElementById('m-entr').textContent=t.entr;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modal-overlay')||e.currentTarget.className==='modal-close')
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ── DOWNLOAD PDF ──────────────────────────────────────────────
+function dlVitrinaPDF(){
+  const btn=document.getElementById('btn-dl');
+  btn.textContent='⏳ Generando PDF...';btn.disabled=true;
+  
+  window.scrollTo(0,0);
+  
+  // Ocultar acciones y esquinas
+  document.getElementById('vit-actions-box').style.display = 'none';
+  document.querySelectorAll('#vit-paper .corner').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.trophy-plaque').forEach(el=>el.style.display='none');
+  
+  // Activar modo detallado vertical y alinear para PDF
+  document.querySelectorAll('.trophy-details').forEach(el=>el.style.display='block');
+  document.getElementById('trophies-showcase').style.flexDirection='column';
+  document.getElementById('trophies-showcase').style.alignItems='stretch';
+  document.getElementById('trophies-showcase').style.gap='24px';
+  document.querySelectorAll('.trophy-stand').forEach(el=>{
+      el.style.width='100%';
+      el.style.flexDirection='row';
+      el.style.alignItems='center';
+      el.style.gap='24px';
+  });
+
+  setTimeout(()=>{
+    html2canvas(document.getElementById('vit-paper'),{
+      backgroundColor:'#f5efe0',
+      scale:2, // Escala alta para evitar compresión de texto
+      useCORS:true,
+      logging:false,
+      allowTaint:true
+    }).then(cv=>{
+      restaurarVitrina(btn);
+      
+      try {
+        const imgData = cv.toDataURL('image/png');
+        
+        // Inicializar jsPDF creando una página que calce a medida con el canvas
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'pt', [cv.width, cv.height]);
+        
+        // Agregar la imagen como página de PDF única de alta calidad
+        pdf.addImage(imgData, 'PNG', 0, 0, cv.width, cv.height);
+        pdf.save(`Constancia-Arqueologo.pdf`);
+        
+        btn.textContent='✓ Descargado';
+      } catch(e) {
+        console.error(e);
+        alert("Hubo un problema al generar el PDF. Intenta abrirlo desde PC.");
+        btn.textContent='↓ Descargar PDF';
+      }
+      setTimeout(()=>{btn.textContent='↓ Descargar PDF';btn.disabled=false;},2500);
+      
+    }).catch(err=>{
+      restaurarVitrina(btn);
+      console.error(err);
+    });
+  },300); // Dar un momento para procesar los estilos expandidos
+}
+
+function restaurarVitrina(btn) {
+  document.querySelectorAll('#vit-paper .corner').forEach(el=>el.style.display='');
+  document.getElementById('vit-actions-box').style.display = 'flex';
+  document.querySelectorAll('.trophy-plaque').forEach(el=>el.style.display='block');
+  document.querySelectorAll('.trophy-details').forEach(el=>el.style.display='none');
+  document.getElementById('trophies-showcase').style.flexDirection='row';
+  document.getElementById('trophies-showcase').style.alignItems='center';
+  document.getElementById('trophies-showcase').style.gap='20px';
+  document.querySelectorAll('.trophy-stand').forEach(el=>{
+      el.style.width='auto';
+      el.style.flexDirection='column';
+      el.style.gap='0';
+  });
+  btn.textContent='↓ Descargar PDF'; btn.disabled=false;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────
+function go(id){
+  sndNav();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function selectMethod(m){
+  sndNav();
+  ST.method=m;ST.zones=m==='tiempo'?[...ZONES_T]:[...ZONES_TM];
+  ST.treasures=[];ST.cur=0;ST.timerSec=900;
+  clearInterval(ST.timerInt);
+  const dc=document.getElementById('tdots');dc.innerHTML='';
+  for(let i=0;i<5;i++){
+    const d=document.createElement('div');
+    d.className='tdot'+(i===0?' active':'');d.id='dot-'+i;d.textContent=i+1;
+    dc.appendChild(d);
+  }
+  document.getElementById('site-lbl').textContent=ST.zones[0].toUpperCase();
+  go('s-dig');
+  setTimeout(()=>{initGroundCanvas();startInteraction(0);startTimer();},60);
+}
+
+function resetGame(){
+  sndNav();clearInterval(ST.timerInt);cancelAnimationFrame(groundAnim);
+  ST={method:null,zones:[],treasures:[],cur:0,selShape:null,timerSec:900,timerInt:null,digDone:false};
+  go('s-b1');
+}
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
